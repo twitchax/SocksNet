@@ -5,30 +5,6 @@ using System.Text;
 
 namespace SocksNet
 {
-    enum Method : byte
-    {
-        NoAuthenticationRequired = 0x00,
-        GSSAPI = 0x01,
-        UsernamePassword = 0x02,
-        IanaAssigned = 0x03,
-        Reserved = 0x80,
-        NoAcceptableMethods = 0xff
-    }
-
-    enum Command : byte
-    {
-        Connect = 0x01,
-        Bind = 0x02,
-        UdpAssociate = 0x03
-    }
-
-    enum AddressType : byte
-    {
-        Ipv4Address = 0x01,
-        DomainName = 0x03,
-        Ipv6Address = 0x04
-    }
-    
     public class Handshake
     {
         public byte Version { get; }

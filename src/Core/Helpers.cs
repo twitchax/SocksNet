@@ -10,6 +10,30 @@ namespace SocksNet
 {
     public static class Helpers
     {
+        public static readonly BiDictionary<byte, string> Commands = new BiDictionary<byte, string>()
+        {
+            { 0x01, "Connect" },
+            { 0x02, "Bind" },
+            { 0x03, "UDP Associate" },
+        };
+
+        public static readonly BiDictionary<byte, string> AddressTypes = new BiDictionary<byte, string>()
+        {
+            { 0x01, "Ipv4" },
+            { 0x03, "Domain" },
+            { 0x04, "Ipv6" },
+        };
+
+        public static readonly BiDictionary<byte, string> AuthenticationMethods = new BiDictionary<byte, string>()
+        {
+            { 0x00, "None" },
+            { 0x01, "GSSAPI" },
+            { 0x02, "Username/Password" },
+            { 0x03, "IANA Assigned" },
+            { 0x80, "Reserved" },
+            { 0xff, "None Acceptable" },
+        };
+
         // Super lazy about logging right now.  I will fix this at some point...
         public static void LogLine(string s)
         {

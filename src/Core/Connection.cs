@@ -108,9 +108,9 @@ namespace SocksNet
 
             Console.WriteLine($"[{Id}]   Request:");
             Console.WriteLine($"[{Id}]     Version: {request.Version}.");
-            Console.WriteLine($"[{Id}]     Command: {request.Command}.");
-            Console.WriteLine($"[{Id}]     RSV: {request.Reserved}.");
-            Console.WriteLine($"[{Id}]     Address Type: {request.AddressType}.");
+            Console.WriteLine($"[{Id}]     Command: {Helpers.Commands[request.Command]}.");
+            //Console.WriteLine($"[{Id}]     RSV: {request.Reserved}.");
+            Console.WriteLine($"[{Id}]     Address Type: {Helpers.AddressTypes[request.AddressType]}.");
             Console.WriteLine($"[{Id}]     Destination: {request.Destination}.");
             Console.WriteLine($"[{Id}]     Port: {request.Port}.");
 

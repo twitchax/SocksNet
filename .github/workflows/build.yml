@@ -1,0 +1,26 @@
+name: build
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout!
+      uses: actions/checkout@v1
+    - name: Setup .NET Environment.
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '3.1.100'
+    - name: Linux Build.
+      run: dotnet publish -r linux-x64 -c release /p:PublishSingleFile=true /p:PublishTrimmed=true
+    - name: Make artifacts directory.
+      run: mkdir -p artifacts
+    - name: Copy artifacts.
+      run: |
+        find . -type f -name SocksNet -exec cp '{}' ./artifacts/. ';'
+    - name: Upload artifacts.
+      uses: actions/upload-artifact@master
+      with:
+        name: artifacts
+        path: artifacts
