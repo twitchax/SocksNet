@@ -109,8 +109,12 @@ namespace SocksNet
 
     public class UdpSocket : TransportSocket
     {
+        // Generic UDP socket properties.
+        
         public Channel<Memory<byte>> AwaitingReceives { get; } = Channel.CreateUnbounded<Memory<byte>>();
         public IPEndPoint? TrackedRemote { get; private set; }
+
+        // Properties of UDP sockets that are "serveresque".
 
         public Channel<UdpSocket> AwaitingAccepts { get; } = Channel.CreateUnbounded<UdpSocket>();
         public bool ActsAsServer { get; private set; } = false;

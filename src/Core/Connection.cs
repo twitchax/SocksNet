@@ -11,6 +11,7 @@ namespace SocksNet
     public class Connection : IDisposable
     {
         private Task? _handleSocksTask;
+        private CancellationTokenSource? _handleSocksTaskCts;
 
         public string Id { get; }
         public TransportSocket ClientSocket { get; private set; }
@@ -19,14 +20,18 @@ namespace SocksNet
         public IPAddress EndpointInterface { get; private set; }
         public int BufferSize { get; private set; }
 
-        private Connection()
+        private Connection(TransportSocket clientSocket, IPAddress endpointInterface, int bufferSize)
         {
-            Id = Guid.NewGuid().ToString().Substring(0, 8);;
+            Id = Guid.NewGuid().ToString().Substring(0, 8);
+
+            ClientSocket = clientSocket;
+            EndpointInterface = endpointInterface;
+            BufferSize = bufferSize;
         }
 
         public void Dispose()
         {
-            // Maybe call cancel on pump?
+            _handleSocksTaskCts?.Cancel();
 
             if(ClientSocket.Connected)
                 ClientSocket.Disconnect(false);
@@ -37,17 +42,19 @@ namespace SocksNet
             EndpointSocket?.Dispose();
         }
 
-        public static Connection From(TransportSocket socketToClient, IPAddress endpointInterface, int bufferSize)
+        public static Connection From(TransportSocket clientSocket, IPAddress endpointInterface, int bufferSize)
         {
-            if(socketToClient == null)
-                throw new ArgumentException($"Parameter `{nameof(socketToClient)}` cannot be `null`.");
+            if(clientSocket == null)
+                throw new ArgumentException($"Parameter `{nameof(clientSocket)}` cannot be `null`.");
 
-            var connection = new Connection() { ClientSocket = socketToClient, EndpointInterface = endpointInterface, BufferSize = bufferSize };
-            return connection;
+            return new Connection(clientSocket, endpointInterface, bufferSize);
         }
 
         public void Handle(CancellationToken cancellationToken = default)
         {
+            _handleSocksTaskCts = new CancellationTokenSource();
+            var mergedCancellationToken = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, _handleSocksTaskCts.Token).Token;
+
             _handleSocksTask = Task.Run(async () =>
             {
                 try
@@ -58,6 +65,9 @@ namespace SocksNet
 
                     await HandleHandshakeAsync(buffer, cancellationToken);
                     await HandleRequestAsync(buffer, cancellationToken);
+
+                    if(EndpointSocket == null)
+                        throw new Exception($"The {nameof(EndpointSocket)} was `null` after completed handshake.");
 
                     Console.WriteLine($"[{Id}]   Data Path: {ClientSocket.RemoteEndPoint} => {ClientSocket.LocalEndPoint} => {EndpointSocket.LocalEndPoint} => {EndpointSocket.RemoteEndPoint}");
 
@@ -76,7 +86,7 @@ namespace SocksNet
                     Console.WriteLine($"[{Id}] End.");
                     this.Dispose();
                 }
-            }, cancellationToken);
+            }, mergedCancellationToken);
         }
 
         private async Task HandleHandshakeAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
@@ -136,9 +146,6 @@ namespace SocksNet
             EndpointSocket = ClientSocket.CreateNewOfSameType();
             EndpointSocket.Bind(new IPEndPoint(EndpointInterface, 0 /* any */));
 
-            IPEndPoint localEndpoint = new IPEndPoint(0, 0);
-            IPEndPoint remoteEndpoint = new IPEndPoint(0, 0);
-
             var error = null as SocketError?;
             
             try
@@ -154,14 +161,14 @@ namespace SocksNet
                     default:
                         throw new Exception("Unknown request type.");
                 }
-
-                localEndpoint = EndpointSocket.LocalEndPoint as IPEndPoint;
-                remoteEndpoint = EndpointSocket.RemoteEndPoint as IPEndPoint;
             }
             catch(SocketException e)
             {
                 error = e.SocketErrorCode;
             }
+
+            var localEndpoint = EndpointSocket?.LocalEndPoint as IPEndPoint ?? new IPEndPoint(0, 0);
+            var remoteEndpoint = EndpointSocket?.RemoteEndPoint as IPEndPoint ?? new IPEndPoint(0, 0);
             
             // The bind address and port should be the server local values during a CONNECT.
 

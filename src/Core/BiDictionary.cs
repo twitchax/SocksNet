@@ -4,7 +4,9 @@ using System.Collections.Generic;
 
 namespace SocksNet
 {
-    public class BiDictionary<TFirst, TSecond> : IEnumerable<KeyValuePair<TFirst, TSecond>>
+    public class BiDictionary<TFirst, TSecond> : IEnumerable<KeyValuePair<TFirst, TSecond>> 
+        where TFirst : notnull
+        where TSecond : notnull
     {
         private IDictionary<TFirst, TSecond> _firstToSecond = new Dictionary<TFirst, TSecond>();
         private IDictionary<TSecond, TFirst> _secondToFirst = new Dictionary<TSecond, TFirst>();
